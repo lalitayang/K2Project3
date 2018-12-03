@@ -1,9 +1,56 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Nov 30 16:24:23 2018
+Created on Sun Dec  2 21:16:39 2018
 
-@author: lalyang
+@author: lalitayang
 """
+
+import matplotlib.pyplot as plt
+
+####################################################################
+################ PLOT CATEGORIES
+####################################################################   
+
+def cat_bar_plot(df, name, topN):
+    """ function to plot bar chart of top N categories"""
+    
+    cat_dict = {}    
+    cats = [df['cat_0'], df['cat_1'], df['cat_2'], df['cat_3'], df['cat_4']]
+    
+    for cat in cats:
+        for c in cat:
+            if c not in cat_dict.keys():
+                cat_dict[c] = 1
+            else: 
+                cat_dict[c] += 1
+                        
+    cats_df = pd.Series(cat_dict).to_frame()
+    cats_df.reset_index(inplace=True)
+    cats_df.columns = ['category', 'count']
+    cats_df.dropna(axis=0, how='any', inplace=True)
+    cats_df.sort_values(by='count', ascending=False, inplace=True)
+    
+    plt.figure(figsize=(10,10))
+    cats_df[:topN].plot.bar(x='category', y='count')
+    plt.title(name)
+    plt.xlabel('category')
+    plt.ylabel('count')
+    plt.savefig('./Yelp Pics/'+name+'.png', bbox_inches='tight' )
+
+# plot master, my bookmraks, my reviews    
+cat_bar_plot(master_bizdet_df, 'All Categories Bar Chart', 10)
+cat_bar_plot(my_bm_df2, 'My Bookmarks_Category Bar Chart', 10)
+cat_bar_plot(my_review_df2, 'My Reviews_Category Bar Chart', 10)
+
+
+####################################################################
+################ GET STATISTICS OF MASTER DATAFRAME
+####################################################################   
+
+master_bizdet_df['price_val'] = master_bizdet_df['price'].apply(lambda x: count_dollar_sign(x))
+
+save_obj(master_bizdet_df, 'master_bizdet_df2')
 
 master_bizdet_df.describe()
 # at least 75% of the businesses have 4 stars or higher 
@@ -12,110 +59,3 @@ master_bizdet_df.describe()
     # lesser known = < 50
     # average popularlity = 50 - 500
     # popular = 500+ 
-    
-master_bizdet_df['price_val'] = master_bizdet_df['price'].apply(lambda x: count_dollar_sign(x))
-
-def count_dollar_sign(price):
-    try:
-        x = len(price)
-        return x
-    except:
-        pass
-    
-
-
-def count_categories(df):
-    cat_dict = {}    
-    cats = [df['cat_0'], df['cat_1'], df['cat_2'], df['cat_3'], df['cat_4']]
-
-    for cat in cats:
-        for c in cat:
-            if c not in cat_dict.keys():
-                cat_dict[c] = 1
-            else: 
-                cat_dict[c] += 1
-                
-    return pd.DataFrame(cat_dict, index=df['user_id']).drop_duplicates()
-
-def get_features(df, usr_id):
-    temp = df[df['user_id'] == usr_id]
-    temp1 = temp.copy()
-    try: 
-        temp1['price_val'] = temp1['price'].apply(lambda x: count_dollar_sign(x))
-        left = pd.pivot_table(temp1, values=['price_val', 'rating'], aggfunc='mean', index='user_id')
-    except:
-        print('left fail', usr_id)
-    try:
-        right = count_categories(temp1)
-    except:
-        print('right fail', usr_id)
-    try:
-        features = left.merge(right, how='inner', left_index=True, right_index=True)
-    except:
-        print('merge fail', usr_id)
-    try:    
-        return features
-    except:
-        pass
-
-?pd.pivot_table
-
-master_cat_dict = count_categories(master_bizdet_df)
-
-mybm_catdict = count_categories(my_bm_df2)
-
-my_bm_df2['price_val'] = my_bm_df2['price'].apply(lambda x: count_dollar_sign(x))
-test = pd.pivot_table(my_bm_df2, values=['price_val', 'rating'], aggfunc='mean', index = 'user_id')
-test2 = test.merge(mybm_catdict, how='inner', left_index=True, right_index=True)
-
-?pd.merge
-
-friend_bm_features = []
-friend_rev_features = []
-
-for friend in all_friends:
-    features = get_features(friend_bm_df2, friend)
-    friend_bm_features.append(features)
-
-for friend in all_friends:   
-    fet = get_features(friend_rev_df2, friend)
-    friend_rev_features.append(fet)
-    
-
-friend_bm_features = pd.concat(friend_bm_features)
-friend_rev_features = pd.concat(friend_rev_features)
-
-
-
-
-friend_rev_df2.loc[friend_rev_df2['user_id'=='Htjd8quvxKquXyKG27bDWw']]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

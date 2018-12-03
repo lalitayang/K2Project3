@@ -7,7 +7,7 @@ Created on Sun Nov 25 13:43:56 2018
 """
 
 import os
-os.chdir(r"C:\Users\lalyang\Documents\GitHub\K2Project3")
+os.chdir("/Users/lalitayang/Documents/K2/Unit 3/Project/")
 print(os.getcwd())
 
 all_friends = load_obj('all_friends')
@@ -78,10 +78,6 @@ for business in master_biz_ids[15000:]: # still need to run
     
 save_obj(master_bizdet_json_16742, 'master_bizdet_json_16742')
         
-master_bizdet_json_16742 = master_bizdet_json_16742[:1271]       
-
-test = get_biz_details(JW_api, 'robin-san-francisco') 
-
 ###############################################################################
 ##################### concat all jsons and convert to 1 master dataframe; 
 ##################### drop duplicates to ensure no duplciates
@@ -147,7 +143,10 @@ b4 = friend_bm_df2[friend_bm_df2['alias'].isnull()]
 
 blanks = pd.concat([b1, b2, b3, b4])
 
-
+save_obj(my_bm_df2, 'my_bm_df2')
+save_obj(my_review_df2, 'my_review_df2')
+save_obj(friend_rev_df2, 'friend_rev_df2')
+save_obj(friend_bm_df2, 'friend_bm_df2')
 
 
 

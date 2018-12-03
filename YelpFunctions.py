@@ -6,13 +6,9 @@ Created on Sun Nov 25 13:03:20 2018
 @author: lalitayang
 """
 
-client_id = '3ywXGq4PyUoR_XXDvK_RIA'
-api_key = 'FPOb0CFdwPxb8_4qN-r89V7n_74JWBe-xwT2zMhRXpd0oCxsn22aY0aITmZZo7FGZvzeKyYMlu7P4C72DXyEAxqpB3_A9aPRjJH1RBXkkwnsoilWCjJSwm-N-Vj2W3Yx'
-
 bookmark_url = 'https://www.yelp.com/user_details_bookmarks?userid='
 review_url = 'https://www.yelp.com/user_details_reviews_self?userid='
 friends_url = 'https://www.yelp.com/user_details_friends?userid='
-self_id = 'ShHBKjuJbQAVBLs7DgA95A'
 
 import pandas as pd
 import requests
@@ -235,7 +231,7 @@ def create_df_reviews(key, reviews):
     return df
     
 ####################################################################
-################ API FUNCTIONS
+################ API CALL FUNCTIONS
 ####################################################################      
 
     
@@ -283,3 +279,106 @@ def api_to_df(api_key, details, business_ids):
     biz_details_df = pd.concat(df_temp)
     
     return biz_details_df
+
+####################################################################
+################ FEATURE ENGINEERING FUNCTIONS
+####################################################################  
+    
+def count_dollar_sign(price):
+    """ helper func to convert $ price to numeric """
+    try:
+        x = len(price)
+        return x
+    except:
+        pass
+    
+def count_categories(df, usr_id):
+    """ function to count the number of businesses for each category """
+    cat_dict = {}    
+    cats = [df['cat_0'], df['cat_1'], df['cat_2'], df['cat_3'], df['cat_4']]
+
+    for cat in cats:
+        for c in cat:
+            if c not in cat_dict.keys():
+                cat_dict[c] = 1
+            else: 
+                cat_dict[c] += 1
+                        
+    s = pd.Series(cat_dict).to_frame().T
+    s = s.loc[:, s.columns.notnull()]
+    s.index = [usr_id]          
+    s['num'] = len(df[df['user_id'] == usr_id].index)      
+    return s
+
+def get_features(df, usr_id):
+    """ function to create a dataframe that has:
+        - average price for businesses interested in
+        - average rating of businesses interested in
+        - uses count_categories """
+    temp = df[df['user_id'] == usr_id]
+    temp1 = temp.copy()
+    try: 
+        temp1['price_val'] = temp1['price'].apply(lambda x: count_dollar_sign(x))
+        left = pd.pivot_table(temp1, values=['price_val', 'rating'], aggfunc='mean', index='user_id')
+    except:
+        print('left fail', usr_id)
+    try:
+        right = count_categories(temp1, usr_id)
+        right = right.apply(lambda x: x/x.loc['num'], axis=1) # normalize and get % of reviews are x category
+    except:
+        print('right fail', usr_id)
+    try:
+        features = left.merge(right, how='inner', left_index=True, right_index=True)
+    except:
+        print('merge fail', usr_id)
+    try:    
+        return features
+    except:
+        pass
+
+####################################################################
+################ EDA FUNCTIONS
+####################################################################     
+    
+def cat_bar_plot(df, name, topN):
+    """ function to plot bar chart of top N categories"""
+    
+    cat_dict = {}    
+    cats = [df['cat_0'], df['cat_1'], df['cat_2'], df['cat_3'], df['cat_4']]
+    
+    for cat in cats:
+        for c in cat:
+            if c not in cat_dict.keys():
+                cat_dict[c] = 1
+            else: 
+                cat_dict[c] += 1
+                        
+    cats_df = pd.Series(cat_dict).to_frame()
+    cats_df.reset_index(inplace=True)
+    cats_df.columns = ['category', 'count']
+    cats_df.dropna(axis=0, how='any', inplace=True)
+    cats_df.sort_values(by='count', ascending=False, inplace=True)
+    
+    plt.figure(figsize=(10,10))
+    cats_df[:topN].plot.bar(x='category', y='count')
+    plt.title(name)
+    plt.xlabel('category')
+    plt.ylabel('count')
+    plt.savefig('./Yelp Pics/'+name+'.png', bbox_inches='tight' )
+
+####################################################################
+################ CALCULATE SIMILARITY FUNCTIONS
+####################################################################   
+    
+def calc_sim(df, self_id, sim_type):
+    """ function to calculate similarity between users using pearson r
+        returns a sorted dataframe of similarities and users"""
+    sim_score = {}
+    df = df.fillna(0)
+    for i in df.index:
+        ss = pearsonr(df.loc[self_id,:], df.loc[i,:])
+        sim_score.update({i: ss[0]})
+    
+    sim = pd.Series(sim_score).to_frame(sim_type+'_similarity')
+    sim_sorted = sim.sort_values(sim_type+'_similarity', ascending=False)
+    return sim_sorted
