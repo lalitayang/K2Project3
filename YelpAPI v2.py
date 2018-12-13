@@ -43,18 +43,17 @@ save_obj(master_biz_ids, 'master_biz_ids')
 ##################### call business details endpoint for ALL BUSINESSES
 ##################### Yelp API only allows for 5000 API calls a day
 ###############################################################################
-
 master_biz_ids = load_obj('master_biz_ids')
 
-#master_bizdet_json_4999 = []
+master_bizdet_json_4999 = []
 
-for business in master_biz_ids[1000:5000]:
+for business in master_biz_ids[:5000]:
     df = get_biz_details(CY_api, business)
     master_bizdet_json_4999.append(df)
 
 save_obj(master_bizdet_json_4999, 'master_bizdet_json_4999')
     
-#master_bizdet_json_9999 = []
+master_bizdet_json_9999 = []
 
 for business in master_biz_ids[5000:10000]: 
     df = get_biz_details(JW_api, business)
@@ -62,7 +61,7 @@ for business in master_biz_ids[5000:10000]:
 
 save_obj(master_bizdet_json_9999, 'master_bizdet_json_9999')
 
-#master_bizdet_json_14999 = []
+master_bizdet_json_14999 = []
 
 for business in master_biz_ids[10000:15000]:
     df = get_biz_details(api_key, business)
@@ -70,7 +69,7 @@ for business in master_biz_ids[10000:15000]:
 
 save_obj(master_bizdet_json_14999, 'master_bizdet_json_14999')
 
-#master_bizdet_json_16742 = []
+master_bizdet_json_16742 = []
 
 for business in master_biz_ids[15000:]: # still need to run
     df = get_biz_details(PS_api, business)
@@ -102,7 +101,6 @@ for business in master_bizdet_json_14999:
 for business in master_bizdet_json_16742:
     master_bizdet_listdf.append(json_to_df(business, details))
 
-### need to append 15000+
     
 master_bizdet_df = pd.concat(master_bizdet_listdf)
 master_bizdet_df.drop_duplicates(subset='alias', keep='first', inplace=True) 
